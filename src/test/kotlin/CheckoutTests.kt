@@ -9,7 +9,7 @@ class CheckoutTests {
 
     @Test
     fun `JustAdd calculates the plain sum`() {
-        val co = Checkout(JustAdd)
+        val co = Checkout(::justAdd)
         co.scan(item1)
         co.scan(item2)
         co.scan(item3)
@@ -18,7 +18,7 @@ class CheckoutTests {
 
     @Test
     fun `10% off over £60`() {
-        val co = Checkout(BasketTotalDiscount)
+        val co = Checkout(BasketTotalDiscount(::justAdd))
         co.scan(item2)
         assertEquals(45.00, co.total())
 
@@ -28,7 +28,7 @@ class CheckoutTests {
 
     @Test
     fun `cut price travel card holder`() {
-        val co = Checkout(TravelCardDiscount)
+        val co = Checkout(TravelCardDiscount(::justAdd))
         co.scan(item1)
         assertEquals(9.25, co.total())
 
@@ -38,7 +38,7 @@ class CheckoutTests {
 
     @Test
     fun `acceptance test 1`() {
-        val co = Checkout(BasketTotalDiscount)
+        val co = Checkout(combinedPricing)
         co.scan(item1)
         co.scan(item2)
         co.scan(item3)
@@ -47,7 +47,7 @@ class CheckoutTests {
 
     @Test
     fun `acceptance test 2`() {
-        val co = Checkout(BasketTotalDiscount)
+        val co = Checkout(combinedPricing)
         co.scan(item1)
         co.scan(item3)
         co.scan(item1)
@@ -56,7 +56,7 @@ class CheckoutTests {
 
     @Test
     fun `acceptance test 3`() {
-        val co = Checkout(BasketTotalDiscount)
+        val co = Checkout(combinedPricing)
         co.scan(item1)
         co.scan(item2)
         co.scan(item1)
@@ -65,23 +65,28 @@ class CheckoutTests {
     }
 }
 
-object TravelCardDiscount : (List<Item>) -> Double {
+val combinedPricing = BasketTotalDiscount(TravelCardDiscount(::justAdd))
+
+class TravelCardDiscount(
+    private val base: (List<Item>) -> Double
+) : (List<Item>) -> Double {
     override fun invoke(items: List<Item>): Double {
         val travelCardCount = items.count { it.code == "001" }
         val travelCardDiscount = if (travelCardCount > 1) travelCardCount * 0.75 else 0.0
-        val base = JustAdd(items)
+        val base = base(items)
         return base - travelCardDiscount
     }
 }
 
-object BasketTotalDiscount : (List<Item>) -> Double {
+class BasketTotalDiscount(
+    private val base: (List<Item>) -> Double
+) : (List<Item>) -> Double {
     override fun invoke(items: List<Item>): Double {
-        val base = TravelCardDiscount(items)
+        val base = base(items)
         return if (base > 60) base * 0.9 else base
     }
 }
 
-object JustAdd : (List<Item>) -> Double {
-    override fun invoke(items: List<Item>): Double = items.sumByDouble { it.price.toDouble() }
-}
+fun justAdd(items: List<Item>): Double = items.sumByDouble { it.price.toDouble() }
+
 
