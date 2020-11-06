@@ -44,6 +44,15 @@ class CheckoutTests {
         co.scan(item3)
         assertEquals(66.78, co.total())
     }
+
+    @Test
+    fun `acceptance test 2`() {
+        val co = Checkout(TravelCardDiscount)
+        co.scan(item1)
+        co.scan(item3)
+        co.scan(item1)
+        assertEquals(36.95, co.total())
+    }
 }
 
 object TravelCardDiscount : (List<Item>) -> Double {
