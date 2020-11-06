@@ -1,5 +1,5 @@
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 
 class CheckoutTests {
 
@@ -38,7 +38,7 @@ class CheckoutTests {
 
     @Test
     fun `acceptance test 1`() {
-        val co = Checkout(TravelCardDiscount)
+        val co = Checkout(BasketTotalDiscount)
         co.scan(item1)
         co.scan(item2)
         co.scan(item3)
@@ -47,11 +47,21 @@ class CheckoutTests {
 
     @Test
     fun `acceptance test 2`() {
-        val co = Checkout(TravelCardDiscount)
+        val co = Checkout(BasketTotalDiscount)
         co.scan(item1)
         co.scan(item3)
         co.scan(item1)
         assertEquals(36.95, co.total())
+    }
+
+    @Test
+    fun `acceptance test 3`() {
+        val co = Checkout(BasketTotalDiscount)
+        co.scan(item1)
+        co.scan(item2)
+        co.scan(item1)
+        co.scan(item3)
+        assertEquals(73.76, co.total(), 0.01)
     }
 }
 
@@ -59,15 +69,14 @@ object TravelCardDiscount : (List<Item>) -> Double {
     override fun invoke(items: List<Item>): Double {
         val travelCardCount = items.count { it.code == "001" }
         val travelCardDiscount = if (travelCardCount > 1) travelCardCount * 0.75 else 0.0
-        val base = BasketTotalDiscount(items)
+        val base = JustAdd(items)
         return base - travelCardDiscount
     }
 }
 
-
 object BasketTotalDiscount : (List<Item>) -> Double {
     override fun invoke(items: List<Item>): Double {
-        val base = items.sumByDouble { it.price.toDouble() }
+        val base = TravelCardDiscount(items)
         return if (base > 60) base * 0.9 else base
     }
 }
