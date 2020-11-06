@@ -1,5 +1,7 @@
+
+
 class Checkout(
-    private val pricing: (List<Item>) -> Double
+    private val pricing: Pricing
 ) {
     private val items = mutableListOf<Item>()
 

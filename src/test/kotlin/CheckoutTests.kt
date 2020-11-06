@@ -7,6 +7,9 @@ class CheckoutTests {
     private val item2 = Item("002", "Personalised cufflinks", 45.00)
     private val item3 = Item("003", "Kids T-shirt", 19.95)
 
+    private val combinedPricing = ::basketTotalDiscount on
+        (::travelCardDiscount on ::justAdd)
+
     @Test
     fun `JustAdd calculates the plain sum`() {
         val co = Checkout(::justAdd)
@@ -64,32 +67,4 @@ class CheckoutTests {
         assertEquals(73.76, co.total(), 0.01)
     }
 }
-
-val combinedPricing = ::basketTotalDiscount on (::travelCardDiscount on ::justAdd)
-
-typealias DiscountPolicy = (base: (List<Item>) -> Double, items: List<Item>) -> Double
-
-infix fun DiscountPolicy.on(base: (List<Item>) -> Double) = fun(items: List<Item>): Double {
-    return this(base, items)
-}
-
-fun travelCardDiscount(
-    base: (List<Item>) -> Double,
-    items: List<Item>
-): Double {
-    val travelCardCount = items.count { it.code == "001" }
-    val travelCardDiscount = if (travelCardCount > 1) travelCardCount * 0.75 else 0.0
-    return base(items) - travelCardDiscount
-}
-
-fun basketTotalDiscount(
-    base1: (List<Item>) -> Double,
-    items: List<Item>
-): Double {
-    val base = base1(items)
-    return if (base > 60) base * 0.9 else base
-}
-
-fun justAdd(items: List<Item>): Double = items.sumByDouble { it.price.toDouble() }
-
 
