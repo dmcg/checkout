@@ -18,7 +18,7 @@ class CheckoutTests {
 
     @Test
     fun `10% off over £60`() {
-        val co = Checkout(Thang(::justAdd, ::basketTotalDiscount))
+        val co = Checkout(::basketTotalDiscount on ::justAdd)
         co.scan(item2)
         assertEquals(45.00, co.total())
 
@@ -28,7 +28,7 @@ class CheckoutTests {
 
     @Test
     fun `cut price travel card holder`() {
-        val co = Checkout(Thang(::justAdd, ::travelCardDiscount))
+        val co = Checkout(::travelCardDiscount on ::justAdd)
         co.scan(item1)
         assertEquals(9.25, co.total())
 
@@ -65,7 +65,13 @@ class CheckoutTests {
     }
 }
 
-val combinedPricing = Thang(Thang(::justAdd, ::travelCardDiscount), ::basketTotalDiscount)
+val combinedPricing = ::basketTotalDiscount on (::travelCardDiscount on ::justAdd)
+
+typealias DiscountPolicy = (base: (List<Item>) -> Double, items: List<Item>) -> Double
+
+infix fun DiscountPolicy.on(base: (List<Item>) -> Double) = fun(items: List<Item>): Double {
+    return this(base, items)
+}
 
 fun travelCardDiscount(
     base: (List<Item>) -> Double,
@@ -82,15 +88,6 @@ fun basketTotalDiscount(
 ): Double {
     val base = base1(items)
     return if (base > 60) base * 0.9 else base
-}
-
-class Thang(
-    private val base: (List<Item>) -> Double,
-    private val tx: (base: (List<Item>) -> Double, items: List<Item>) -> Double
-) : (List<Item>) -> Double {
-    override fun invoke(items: List<Item>): Double {
-        return tx(base, items)
-    }
 }
 
 fun justAdd(items: List<Item>): Double = items.sumByDouble { it.price.toDouble() }
