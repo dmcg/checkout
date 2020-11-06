@@ -58,20 +58,3 @@ object JustAdd : (List<Item>) -> Double {
     override fun invoke(items: List<Item>): Double = items.sumByDouble { it.price.toDouble() }
 }
 
-data class Item(
-    val code: String,
-    val name: String,
-    val price: Number
-)
-
-class Checkout(
-    private val pricing: (List<Item>) -> Double
-) {
-    private val items = mutableListOf<Item>()
-
-    fun scan(item: Item) {
-        items.add(item)
-    }
-
-    fun total(): Double = pricing(items)
-}
