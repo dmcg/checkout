@@ -38,7 +38,7 @@ class CheckoutTests {
 
     @Test
     fun `acceptance test 1`() {
-        val co = Checkout(BasketTotalDiscount)
+        val co = Checkout(TravelCardDiscount)
         co.scan(item1)
         co.scan(item2)
         co.scan(item3)
@@ -59,7 +59,7 @@ object TravelCardDiscount : (List<Item>) -> Double {
     override fun invoke(items: List<Item>): Double {
         val travelCardCount = items.count { it.code == "001" }
         val travelCardDiscount = if (travelCardCount > 1) travelCardCount * 0.75 else 0.0
-        val base = items.sumByDouble { it.price.toDouble() }
+        val base = BasketTotalDiscount(items)
         return base - travelCardDiscount
     }
 }
