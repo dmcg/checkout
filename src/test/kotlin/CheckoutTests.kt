@@ -18,7 +18,7 @@ class CheckoutTests {
 
     @Test
     fun `10% off over £60`() {
-        val co = Checkout(BasketTotalDiscount(::justAdd))
+        val co = Checkout(Thang(::justAdd, ::basketTotalDiscount))
         co.scan(item2)
         assertEquals(45.00, co.total())
 
@@ -28,7 +28,7 @@ class CheckoutTests {
 
     @Test
     fun `cut price travel card holder`() {
-        val co = Checkout(TravelCardDiscount(::justAdd))
+        val co = Checkout(Thang(::justAdd, ::travelCardDiscount))
         co.scan(item1)
         assertEquals(9.25, co.total())
 
@@ -65,25 +65,31 @@ class CheckoutTests {
     }
 }
 
-val combinedPricing = BasketTotalDiscount(TravelCardDiscount(::justAdd))
+val combinedPricing = Thang(Thang(::justAdd, ::travelCardDiscount), ::basketTotalDiscount)
 
-class TravelCardDiscount(
-    private val base: (List<Item>) -> Double
-) : (List<Item>) -> Double {
-    override fun invoke(items: List<Item>): Double {
-        val travelCardCount = items.count { it.code == "001" }
-        val travelCardDiscount = if (travelCardCount > 1) travelCardCount * 0.75 else 0.0
-        val base = base(items)
-        return base - travelCardDiscount
-    }
+fun travelCardDiscount(
+    base: (List<Item>) -> Double,
+    items: List<Item>
+): Double {
+    val travelCardCount = items.count { it.code == "001" }
+    val travelCardDiscount = if (travelCardCount > 1) travelCardCount * 0.75 else 0.0
+    return base(items) - travelCardDiscount
 }
 
-class BasketTotalDiscount(
-    private val base: (List<Item>) -> Double
+fun basketTotalDiscount(
+    base1: (List<Item>) -> Double,
+    items: List<Item>
+): Double {
+    val base = base1(items)
+    return if (base > 60) base * 0.9 else base
+}
+
+class Thang(
+    private val base: (List<Item>) -> Double,
+    private val tx: (base: (List<Item>) -> Double, items: List<Item>) -> Double
 ) : (List<Item>) -> Double {
     override fun invoke(items: List<Item>): Double {
-        val base = base(items)
-        return if (base > 60) base * 0.9 else base
+        return tx(base, items)
     }
 }
 
