@@ -1,1 +1,1 @@
-An performance of a checkout kata
+A performance of a checkout kata
